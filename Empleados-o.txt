@@ -1,0 +1,13 @@
+RID231108CC3BOLX041213SS1Ximena              Bolanos             Lopez
+LEN990829DD4DOCE040406MM1Ernesto             Dominguez           Chimal
+MIR200515B22GAGF040501FF8Francisco           Garcia              Garcia
+LTH881511A11GALE751005BB2Elvia               Garcia              Lopez
+LTH881511A11HEHD990115GG9Dante               Hernandez           Herrera
+MIR200515B22HEHD990115GG9Dante               Hernandez           Herrera
+RID231108CC3HEHD990115GG9Dante               Hernandez           Herrera
+MIR200515B22MURD961108CC5Diana               Munoz               Rodas
+RID231108CC3MURD961108CC5Diana               Munoz               Rodas
+LTH881511A11PEGJ951211AA1Juan                Perez               Gomez
+RID231108CC3PEGJ951211AA1Juan                Perez               Gomez
+LTH881511A11ROBA010518DD9Amaury              Rodarte             Barrios
+MIR200515B22ROBA010518DD9Amaury              Rodarte             Barrios

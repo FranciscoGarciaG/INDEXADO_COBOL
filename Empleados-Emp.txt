@@ -1,0 +1,13 @@
+RID231108CC3BOLX041213SS1Ximena              Bolanos             Lopez               RID TEAM            081120233025985
+LEN990829DD4DOCE040406MM1Ernesto             Dominguez           Chimal              LENOVO              290819991658925
+MIR200515B22GAGF040501FF8Francisco           Garcia              Garcia              MIRPA CODE          150520202548972
+LTH881511A11GALE751005BB2Elvia               Garcia              Lopez               LTH TECH            111519881254785
+LTH881511A11HEHD990115GG9Dante               Hernandez           Herrera             LTH TECH            111519881254785
+MIR200515B22HEHD990115GG9Dante               Hernandez           Herrera             MIRPA CODE          150520202548972
+RID231108CC3HEHD990115GG9Dante               Hernandez           Herrera             RID TEAM            081120233025985
+MIR200515B22MURD961108CC5Diana               Munoz               Rodas               MIRPA CODE          150520202548972
+RID231108CC3MURD961108CC5Diana               Munoz               Rodas               RID TEAM            081120233025985
+LTH881511A11PEGJ951211AA1Juan                Perez               Gomez               LTH TECH            111519881254785
+RID231108CC3PEGJ951211AA1Juan                Perez               Gomez               RID TEAM            081120233025985
+LTH881511A11ROBA010518DD9Amaury              Rodarte             Barrios             LTH TECH            111519881254785
+MIR200515B22ROBA010518DD9Amaury              Rodarte             Barrios             MIRPA CODE          150520202548972
