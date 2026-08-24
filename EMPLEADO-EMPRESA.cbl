@@ -30,6 +30,12 @@
            SELECT EMPLEADOS-EMPRESAS ASSIGN TO "../Empleados-Emp.txt"
                ORGANIZATION IS LINE SEQUENTIAL
                ACCESS MODE IS SEQUENTIAL.
+           SELECT EMPLEADOS-EMPRESAS-IDX
+           ASSIGN TO "../Empleados-Emp-IDX.txt"
+               ORGANIZATION IS INDEXED
+               ACCESS MODE IS DYNAMIC
+               RECORD KEY IS EE-RFC-EMPLEADO-IDX
+               FILE STATUS IS FILE-STATUS.
            SELECT REPORTE ASSIGN TO "../Reporte.txt"
                ORGANIZATION IS LINE SEQUENTIAL
                ACCESS MODE IS SEQUENTIAL.
@@ -94,10 +100,23 @@
            05 EE-FECHA-UP      PIC X(08).
            05 EE-SALARIO       PIC 9(05)V9(02).
 
+       FD  EMPLEADOS-EMPRESAS-IDX.
+       01  EMPLEADO-EMPRESA-IDX.
+           05 EE-RFC-EMPRESA-IDX   PIC X(12).
+           05 EE-RFC-EMPLEADO-IDX  PIC X(13).
+           05 EE-NOMBRE-EMPL-IDX   PIC X(20).
+           05 EE-APATERNO-IDX      PIC X(20).
+           05 EE-AMATERNO-IDX      PIC X(20).
+           05 EE-NOMBRE-EMPR-IDX   PIC X(20).
+           05 EE-FECHA-UP-IDX      PIC X(08).
+           05 EE-SALARIO-IDX       PIC 9(05)V9(02).
+
        FD  REPORTE.
        01  REGISTRO-REPORTE       PIC X(130).
 
        WORKING-STORAGE SECTION.
+
+       77  FILE-STATUS            PIC XX.
 
        01  WS-FIN-ARCHIVO         PIC X VALUE "N".
            88 FIN-ARCHIVO         VALUE "S".
@@ -114,6 +133,9 @@
            05 WS-DIA               PIC 9(2).
            05 WS-MES               PIC 9(2).
            05 WS-ANIO              PIC 9(4).
+
+       01  WS-OPCION               PIC X.
+       01  RFC                     PIC X(13).
 
        01  FORMATOS.
            05 WS-FECHA-FORMATEADA    PIC X(10).
@@ -162,17 +184,65 @@
 
        PROCEDURE DIVISION.
        00-MAIN-PROCEDURE.
-            PERFORM 10-ORDENAR-ARCHIVOS
-            PERFORM 20-ABRIR-ARCHIVOS
-            PERFORM 30-LEER-EMPLEADOS
-            PERFORM 30-LEER-EMPRESAS
-            PERFORM 40-EMPAREJAR-DATOS
-            PERFORM 70-CERRAR-ARCHIVO
-            PERFORM 80-ABRIR-ARCHIVO
-            PERFORM 90-LEER-EMPLEADOS-EMPRESAS
-            PERFORM 110-GENERAR-REPORTE
-            PERFORM 120-CERRAR-REPORTE
-            STOP RUN.
+           DISPLAY "MENU"
+           DISPLAY "1. REGENERAR ARCHIVO EMPRESA-EMPLEADO"
+           DISPLAY "2. GENERAR REPORTE"
+           DISPLAY "3. GENERAR EMPRESA-EMPLEADO INDEXADO"
+           DISPLAY "4. BUSCAR EMPLEADO"
+           DISPLAY "5. SALIR"
+           ACCEPT WS-OPCION
+           EVALUATE WS-OPCION
+                    WHEN 1
+                       PERFORM 10-ORDENAR-ARCHIVOS
+                       PERFORM 20-ABRIR-ARCHIVOS
+                       PERFORM 30-LEER-EMPLEADOS
+                       PERFORM 30-LEER-EMPRESAS
+                       PERFORM 40-EMPAREJAR-DATOS
+                       PERFORM 70-CERRAR-ARCHIVO
+                       DISPLAY "ARCHIVO EMPLEADO-EMPRESA GENERADO"
+                       MOVE "N" TO WS-FIN-ARCHIVO
+                       MOVE "N" TO WS-FIN-ARCHIVO-2
+                       PERFORM 00-MAIN-PROCEDURE
+                    WHEN 2
+                       PERFORM 80-ABRIR-ARCHIVO
+                       PERFORM 90-LEER-EMPLEADOS-EMPRESAS
+                       PERFORM 110-GENERAR-REPORTE
+                       PERFORM 120-CERRAR-REPORTE
+                       DISPLAY "REPORTE GENERADO"
+                       MOVE "N" TO WS-FIN-ARCHIVO-3
+                       PERFORM 00-MAIN-PROCEDURE
+                    WHEN 3
+                       PERFORM 130-ABRIR-ARCHIVO-EE
+                       PERFORM 140-INDEX-CONVERT
+                       PERFORM 150-CERRAR-ARCHIVOS
+                       DISPLAY "Conversión completada."
+                       MOVE "N" TO WS-FIN-ARCHIVO-2
+                       PERFORM 00-MAIN-PROCEDURE
+                    WHEN 4
+                       DISPLAY "BUSCAR EMPLEDO"
+                       PERFORM 130-ABRIR-ARCHIVO-INDX
+                       DISPLAY "INGRESE EL RFC DEL EMPLEADO:"
+                       ACCEPT RFC
+                       MOVE RFC TO EE-RFC-EMPLEADO-IDX
+                       READ EMPLEADOS-EMPRESAS-IDX
+                       INVALID KEY
+                           DISPLAY "RFC NO ENCONTRADO"
+                       NOT INVALID KEY
+                           DISPLAY "EMPLEADO ENCONTRADO"
+                           PERFORM 140-VER-DATOS
+                   END-READ
+                   PERFORM 150-CERRAR-INDX
+                   PERFORM 00-MAIN-PROCEDURE
+
+                       PERFORM 00-MAIN-PROCEDURE
+                    WHEN 5
+                       STOP RUN
+                    WHEN OTHER
+                       DISPLAY "OPCION NO VALIDA"
+                       PERFORM 00-MAIN-PROCEDURE
+           END-EVALUATE.
+
+
 
        10-ORDENAR-ARCHIVOS.
            SORT EMPLEADOS-SORT
@@ -307,5 +377,48 @@
        120-CERRAR-REPORTE.
            CLOSE REPORTE
                  EMPLEADOS-EMPRESAS.
+
+       130-ABRIR-ARCHIVO-EE.
+           OPEN INPUT EMPLEADOS-EMPRESAS
+                OUTPUT EMPLEADOS-EMPRESAS-IDX.
+
+       130-ABRIR-ARCHIVO-INDX.
+           OPEN INPUT EMPLEADOS-EMPRESAS-IDX.
+
+       140-INDEX-CONVERT.
+           PERFORM UNTIL FIN-ARCHIVO-2
+               READ EMPLEADOS-EMPRESAS
+                   AT END
+                       MOVE "S" TO WS-FIN-ARCHIVO-2
+                   NOT AT END
+                       MOVE EE-RFC-EMPRESA  TO EE-RFC-EMPRESA-IDX
+                       MOVE EE-RFC-EMPLEADO TO EE-RFC-EMPLEADO-IDX
+                       MOVE EE-NOMBRE-EMPL  TO EE-NOMBRE-EMPL-IDX
+                       MOVE EE-APATERNO     TO EE-APATERNO-IDX
+                       MOVE EE-AMATERNO     TO EE-AMATERNO-IDX
+                       MOVE EE-NOMBRE-EMPR  TO EE-NOMBRE-EMPR-IDX
+                       MOVE EE-FECHA-UP     TO EE-FECHA-UP-IDX
+                       MOVE EE-SALARIO      TO EE-SALARIO-IDX
+                       WRITE EMPLEADO-EMPRESA-IDX
+               END-READ
+           END-PERFORM.
+
+       140-VER-DATOS.
+           DISPLAY "---------------------------------------------------"
+           DISPLAY "RFC EMPRESA         :" EE-RFC-EMPRESA-IDX
+           DISPLAY "RFC EMPLEADO        :" EE-RFC-EMPLEADO-IDX
+           DISPLAY "NOMBRE EMPLEADO     :" EE-NOMBRE-EMPL-IDX
+           DISPLAY "APELLIDO PATERNO    :" EE-APATERNO-IDX
+           DISPLAY "APELLIDO MATERNO    :" EE-AMATERNO-IDX
+           DISPLAY "NOMBRE EMPRESA      :" EE-NOMBRE-EMPR-IDX
+           DISPLAY "FECHA ALTA EMPRESA  :" EE-FECHA-UP-IDX
+           DISPLAY "SALARIO             :" EE-SALARIO-IDX.
+
+       150-CERRAR-ARCHIVOS.
+           CLOSE EMPLEADOS-EMPRESAS
+                 EMPLEADOS-EMPRESAS-IDX.
+
+       150-CERRAR-INDX.
+           CLOSE EMPLEADOS-EMPRESAS-IDX.
 
        END PROGRAM EMPLEADO-EMPRESA.
