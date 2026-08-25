@@ -141,15 +141,31 @@
            05 WS-FECHA-FORMATEADA    PIC X(10).
            05 WS-SALARIO-FORMATEADO  PIC $$,$$$,$$9.99.
 
-       01  WS-LINEA-DIVISORIA-TOTAL.
-           05 FILLER PIC X(60) VALUE
-              "-------------------------------------------------------".
-           05 FILLER PIC X(60) VALUE
-              "-------------------------------------------------------".
+       01  WS-LINEA-DIVISORIA-TOTAL PIC X(126)
+           VALUE ALL"-".
 
+            *>EFECTO CAJA- SEPARADORA DE COLUMNAS
+       01  WS-LINEA-SEPARADORA.
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(15) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(20) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(20) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(20) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(12) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(20) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+           05 FILLER PIC X(13) VALUE ALL "-".
+           05 FILLER PIC X VALUE "+".
+
+           *> ENCABEZADOS
        01  WS-ENCABEZADO.
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(13) VALUE "RFC          ".
+           05 FILLER PIC X(15) VALUE "RFC          ".
            05 FILLER PIC X VALUE "|".
            05 FILLER PIC X(20) VALUE "NOMBRE              ".
            05 FILLER PIC X VALUE "|".
@@ -166,7 +182,7 @@
 
        01  WS-LINEA-REPORTE.
            05 FILLER                 PIC X VALUE "|".
-           05 R-RFC                  PIC X(13).
+           05 R-RFC                  PIC X(15).
            05 FILLER                 PIC X VALUE "|".
            05 R-NOMBRE               PIC X(20).
            05 FILLER                 PIC X VALUE "|".
@@ -180,6 +196,21 @@
            05 FILLER                 PIC X VALUE "|".
            05 R-SALARIOS             PIC X(13).
            05 FILLER                 PIC X VALUE "|".
+
+           *> BORDE SUPERIOR E INFERIOR DEL TITULO
+       01  WS-BORDE-TITULO.
+           05 FILLER PIC X     VALUE "+".
+           05 FILLER PIC X(126) VALUE ALL "-".
+           05 FILLER PIC X     VALUE "+".
+
+           *> TITULO PRINCIPAL
+       01  WS-TITULO-REPORTE.
+           05 FILLER PIC X     VALUE "|".
+           05 FILLER PIC X(47) VALUE SPACES.
+           05 FILLER PIC X(32) VALUE
+              "REPORTE DE EMPLEADOS POR EMPRESA".
+           05 FILLER PIC X(47) VALUE SPACES.
+           05 FILLER PIC X     VALUE "|".
 
 
        PROCEDURE DIVISION.
@@ -336,24 +367,49 @@
            MOVE EE-SALARIO TO WS-SALARIO-FORMATEADO.
 
        110-GENERAR-REPORTE.
-           MOVE WS-LINEA-DIVISORIA-TOTAL TO REGISTRO-REPORTE
+             *> BORDE SUPERIOR DEL REPORTE
+           MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
+            *> TITULO PRINCIPAL
+           MOVE WS-TITULO-REPORTE TO REGISTRO-REPORTE
+           WRITE REGISTRO-REPORTE
+
+           *> BORDE INFERIOR DEL TITULO
+           MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
+           WRITE REGISTRO-REPORTE
+
+            *> ENCABEZADOS
            MOVE WS-ENCABEZADO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-           MOVE WS-LINEA-DIVISORIA-TOTAL TO REGISTRO-REPORTE
+           *> BORDE INFERIOR DEL TITULO
+           MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
+           WRITE REGISTRO-REPORTE
+
+            *> LINEA DEBAJO DE LOS ENCABEZADOS
+           MOVE WS-LINEA-SEPARADORA TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
            PERFORM UNTIL FIN-ARCHIVO-3
                PERFORM 100-FORMATEAR-DATOS
 
+           *> VALIDAR SI ES EL MISMO EMPLEADO
                IF EE-RFC-EMPLEADO = WS-ANT-RFC-EMPLEADO
                    MOVE SPACES                TO R-RFC
                    MOVE SPACES                TO R-NOMBRE
                    MOVE SPACES                TO R-APATERNO
                    MOVE SPACES                TO R-AMATERNO
                ELSE
+
+            *> SEPARAR UN EMPLEADO DEL SIGUIENTE
+                    IF WS-ANT-RFC-EMPLEADO NOT = SPACES
+                      MOVE WS-LINEA-SEPARADORA
+                         TO REGISTRO-REPORTE
+                       WRITE REGISTRO-REPORTE
+                     END-IF
+
+           *> DATOS DEL NUEVO EMPLEADO
                    MOVE EE-RFC-EMPLEADO       TO R-RFC
                    MOVE EE-NOMBRE-EMPL        TO R-NOMBRE
                    MOVE EE-APATERNO           TO R-APATERNO
@@ -361,17 +417,21 @@
                    MOVE EE-RFC-EMPLEADO       TO WS-ANT-RFC-EMPLEADO
                END-IF
 
+           *> DATOS DE LA EMPRESA
                MOVE EE-RFC-EMPRESA        TO R-RFC-EMPRESA
                MOVE EE-NOMBRE-EMPR        TO R-NOMBRE-EMPRESA
                MOVE WS-SALARIO-FORMATEADO TO R-SALARIOS
 
+           *> ESCRIBIR LA LINEA EN REPORTE.TXT
                MOVE WS-LINEA-REPORTE      TO REGISTRO-REPORTE
                WRITE REGISTRO-REPORTE
 
+           *> LEER SIGUIENTE REGISTRO
                PERFORM 90-LEER-EMPLEADOS-EMPRESAS
            END-PERFORM
 
-           MOVE WS-LINEA-DIVISORIA-TOTAL TO REGISTRO-REPORTE
+           *> BORDE INFERIOR DEL REPORTE
+           MOVE WS-LINEA-SEPARADORA  TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE.
 
        120-CERRAR-REPORTE.
