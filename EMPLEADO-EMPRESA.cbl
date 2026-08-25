@@ -1,7 +1,7 @@
       ******************************************************************
       * Author:
       * Date:
-      * Purpose:
+      * Purpose: Manejo de Empleados/Empresas con Clave Alternativa y Duplicados
       * Tectonics: cobc
       ******************************************************************
        IDENTIFICATION DIVISION.
@@ -34,7 +34,9 @@
            ASSIGN TO "../Empleados-Emp-IDX.txt"
                ORGANIZATION IS INDEXED
                ACCESS MODE IS DYNAMIC
-               RECORD KEY IS EE-RFC-EMPLEADO-IDX
+               RECORD KEY IS EE-CLAVE-PRIMARIA-IDX
+               ALTERNATE RECORD KEY IS EE-RFC-EMPLEADO-IDX
+                   WITH DUPLICATES
                FILE STATUS IS FILE-STATUS.
            SELECT REPORTE ASSIGN TO "../Reporte.txt"
                ORGANIZATION IS LINE SEQUENTIAL
@@ -102,8 +104,9 @@
 
        FD  EMPLEADOS-EMPRESAS-IDX.
        01  EMPLEADO-EMPRESA-IDX.
-           05 EE-RFC-EMPRESA-IDX   PIC X(12).
-           05 EE-RFC-EMPLEADO-IDX  PIC X(13).
+           05 EE-CLAVE-PRIMARIA-IDX.
+              10 EE-RFC-EMPLEADO-IDX  PIC X(13).
+              10 EE-RFC-EMPRESA-IDX   PIC X(12).
            05 EE-NOMBRE-EMPL-IDX   PIC X(20).
            05 EE-APATERNO-IDX      PIC X(20).
            05 EE-AMATERNO-IDX      PIC X(20).
@@ -121,11 +124,13 @@
        01  WS-FIN-ARCHIVO         PIC X VALUE "N".
            88 FIN-ARCHIVO         VALUE "S".
 
-       01  WS-FIN-ARCHIVO-2         PIC X VALUE "N".
-           88 FIN-ARCHIVO-2         VALUE "S".
+       01  WS-FIN-ARCHIVO-2       PIC X VALUE "N".
+           88 FIN-ARCHIVO-2       VALUE "S".
 
-       01  WS-FIN-ARCHIVO-3         PIC X VALUE "N".
-           88 FIN-ARCHIVO-3         VALUE "S".
+       01  WS-FIN-ARCHIVO-3       PIC X VALUE "N".
+           88 FIN-ARCHIVO-3       VALUE "S".
+
+       01  WS-FIN-BUSQUEDA        PIC X VALUE "N".
 
        01  WS-ANT-RFC-EMPLEADO    PIC X(13) VALUE SPACES.
 
@@ -141,10 +146,13 @@
            05 WS-FECHA-FORMATEADA    PIC X(10).
            05 WS-SALARIO-FORMATEADO  PIC $$,$$$,$$9.99.
 
+       01  FORMATOS-INDX.
+           05 WS-FECHA-FORMATEADA-INDX    PIC X(10).
+           05 WS-SALARIO-FORMATEADO-INDX  PIC $$,$$$,$$9.99.
+
        01  WS-LINEA-DIVISORIA-TOTAL PIC X(126)
            VALUE ALL"-".
 
-            *>EFECTO CAJA- SEPARADORA DE COLUMNAS
        01  WS-LINEA-SEPARADORA.
            05 FILLER PIC X VALUE "+".
            05 FILLER PIC X(15) VALUE ALL "-".
@@ -162,7 +170,6 @@
            05 FILLER PIC X(13) VALUE ALL "-".
            05 FILLER PIC X VALUE "+".
 
-           *> ENCABEZADOS
        01  WS-ENCABEZADO.
            05 FILLER PIC X VALUE "|".
            05 FILLER PIC X(15) VALUE "RFC          ".
@@ -197,13 +204,11 @@
            05 R-SALARIOS             PIC X(13).
            05 FILLER                 PIC X VALUE "|".
 
-           *> BORDE SUPERIOR E INFERIOR DEL TITULO
        01  WS-BORDE-TITULO.
            05 FILLER PIC X     VALUE "+".
            05 FILLER PIC X(126) VALUE ALL "-".
            05 FILLER PIC X     VALUE "+".
 
-           *> TITULO PRINCIPAL
        01  WS-TITULO-REPORTE.
            05 FILLER PIC X     VALUE "|".
            05 FILLER PIC X(47) VALUE SPACES.
@@ -212,68 +217,51 @@
            05 FILLER PIC X(47) VALUE SPACES.
            05 FILLER PIC X     VALUE "|".
 
-
        PROCEDURE DIVISION.
        00-MAIN-PROCEDURE.
-           DISPLAY "MENU"
-           DISPLAY "1. REGENERAR ARCHIVO EMPRESA-EMPLEADO"
-           DISPLAY "2. GENERAR REPORTE"
-           DISPLAY "3. GENERAR EMPRESA-EMPLEADO INDEXADO"
-           DISPLAY "4. BUSCAR EMPLEADO"
-           DISPLAY "5. SALIR"
-           ACCEPT WS-OPCION
-           EVALUATE WS-OPCION
-                    WHEN 1
-                       PERFORM 10-ORDENAR-ARCHIVOS
-                       PERFORM 20-ABRIR-ARCHIVOS
-                       PERFORM 30-LEER-EMPLEADOS
-                       PERFORM 30-LEER-EMPRESAS
-                       PERFORM 40-EMPAREJAR-DATOS
-                       PERFORM 70-CERRAR-ARCHIVO
-                       DISPLAY "ARCHIVO EMPLEADO-EMPRESA GENERADO"
-                       MOVE "N" TO WS-FIN-ARCHIVO
-                       MOVE "N" TO WS-FIN-ARCHIVO-2
-                       PERFORM 00-MAIN-PROCEDURE
-                    WHEN 2
-                       PERFORM 80-ABRIR-ARCHIVO
-                       PERFORM 90-LEER-EMPLEADOS-EMPRESAS
-                       PERFORM 110-GENERAR-REPORTE
-                       PERFORM 120-CERRAR-REPORTE
-                       DISPLAY "REPORTE GENERADO"
-                       MOVE "N" TO WS-FIN-ARCHIVO-3
-                       PERFORM 00-MAIN-PROCEDURE
-                    WHEN 3
-                       PERFORM 130-ABRIR-ARCHIVO-EE
-                       PERFORM 140-INDEX-CONVERT
-                       PERFORM 150-CERRAR-ARCHIVOS
-                       DISPLAY "Conversión completada."
-                       MOVE "N" TO WS-FIN-ARCHIVO-2
-                       PERFORM 00-MAIN-PROCEDURE
-                    WHEN 4
-                       DISPLAY "BUSCAR EMPLEDO"
-                       PERFORM 130-ABRIR-ARCHIVO-INDX
-                       DISPLAY "INGRESE EL RFC DEL EMPLEADO:"
-                       ACCEPT RFC
-                       MOVE RFC TO EE-RFC-EMPLEADO-IDX
-                       READ EMPLEADOS-EMPRESAS-IDX
-                       INVALID KEY
-                           DISPLAY "RFC NO ENCONTRADO"
-                       NOT INVALID KEY
-                           DISPLAY "EMPLEADO ENCONTRADO"
-                           PERFORM 140-VER-DATOS
-                   END-READ
-                   PERFORM 150-CERRAR-INDX
-                   PERFORM 00-MAIN-PROCEDURE
-
-                       PERFORM 00-MAIN-PROCEDURE
-                    WHEN 5
-                       STOP RUN
-                    WHEN OTHER
-                       DISPLAY "OPCION NO VALIDA"
-                       PERFORM 00-MAIN-PROCEDURE
-           END-EVALUATE.
-
-
+           PERFORM UNTIL WS-OPCION = "5"
+               DISPLAY "MENU"
+               DISPLAY "1. REGENERAR ARCHIVO EMPRESA-EMPLEADO"
+               DISPLAY "2. GENERAR REPORTE"
+               DISPLAY "3. GENERAR EMPRESA-EMPLEADO INDEXADO"
+               DISPLAY "4. BUSCAR EMPLEADO"
+               DISPLAY "5. SALIR"
+               ACCEPT WS-OPCION
+               EVALUATE WS-OPCION
+                        WHEN "1"
+                           PERFORM 10-ORDENAR-ARCHIVOS
+                           PERFORM 20-ABRIR-ARCHIVOS
+                           PERFORM 30-LEER-EMPLEADOS
+                           PERFORM 30-LEER-EMPRESAS
+                           PERFORM 40-EMPAREJAR-DATOS
+                           PERFORM 70-CERRAR-ARCHIVO
+                           DISPLAY "ARCHIVO EMPLEADO-EMPRESA GENERADO"
+                           MOVE "N" TO WS-FIN-ARCHIVO
+                           MOVE "N" TO WS-FIN-ARCHIVO-2
+                        WHEN "2"
+                           PERFORM 80-ABRIR-ARCHIVO
+                           PERFORM 90-LEER-EMPLEADOS-EMPRESAS
+                           PERFORM 110-GENERAR-REPORTE
+                           PERFORM 120-CERRAR-REPORTE
+                           DISPLAY "REPORTE GENERADO"
+                           MOVE "N" TO WS-FIN-ARCHIVO-3
+                        WHEN "3"
+                           MOVE "N" TO WS-FIN-ARCHIVO-2
+                           PERFORM 130-ABRIR-ARCHIVO-EE
+                           PERFORM 140-INDEX-CONVERT
+                           PERFORM 150-CERRAR-ARCHIVOS
+                           DISPLAY "Conversión completada."
+                        WHEN "4"
+                           DISPLAY "BUSCAR EMPLEADO"
+                           PERFORM 130-ABRIR-ARCHIVO-INDX
+                           PERFORM 140-BUSCAR-EMPLEADO
+                           PERFORM 150-CERRAR-INDX
+                        WHEN "5"
+                           STOP RUN
+                        WHEN OTHER
+                           DISPLAY "OPCION NO VALIDA"
+               END-EVALUATE
+           END-PERFORM.
 
        10-ORDENAR-ARCHIVOS.
            SORT EMPLEADOS-SORT
@@ -366,72 +354,72 @@
 
            MOVE EE-SALARIO TO WS-SALARIO-FORMATEADO.
 
+       100-FORMATEAR-DATOS-INDX.
+           MOVE EE-FECHA-UP-IDX(1:2) TO WS-DIA
+           MOVE EE-FECHA-UP-IDX(3:2) TO WS-MES
+           MOVE EE-FECHA-UP-IDX(5:4) TO WS-ANIO
+           STRING
+               WS-ANIO DELIMITED BY SIZE
+               "-"    DELIMITED BY SIZE
+               WS-MES DELIMITED BY SIZE
+               "-"    DELIMITED BY SIZE
+               WS-DIA DELIMITED BY SIZE
+               INTO WS-FECHA-FORMATEADA-INDX
+           END-STRING
+
+           MOVE EE-SALARIO-IDX TO WS-SALARIO-FORMATEADO-INDX.
+
        110-GENERAR-REPORTE.
-             *> BORDE SUPERIOR DEL REPORTE
            MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-            *> TITULO PRINCIPAL
            MOVE WS-TITULO-REPORTE TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-           *> BORDE INFERIOR DEL TITULO
            MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-            *> ENCABEZADOS
            MOVE WS-ENCABEZADO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-           *> BORDE INFERIOR DEL TITULO
            MOVE WS-BORDE-TITULO TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
-            *> LINEA DEBAJO DE LOS ENCABEZADOS
            MOVE WS-LINEA-SEPARADORA TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE
 
            PERFORM UNTIL FIN-ARCHIVO-3
                PERFORM 100-FORMATEAR-DATOS
 
-           *> VALIDAR SI ES EL MISMO EMPLEADO
                IF EE-RFC-EMPLEADO = WS-ANT-RFC-EMPLEADO
-                   MOVE SPACES                TO R-RFC
-                   MOVE SPACES                TO R-NOMBRE
-                   MOVE SPACES                TO R-APATERNO
-                   MOVE SPACES                TO R-AMATERNO
+                   MOVE SPACES TO R-RFC
+                   MOVE SPACES TO R-NOMBRE
+                   MOVE SPACES TO R-APATERNO
+                   MOVE SPACES TO R-AMATERNO
                ELSE
-
-            *> SEPARAR UN EMPLEADO DEL SIGUIENTE
-                    IF WS-ANT-RFC-EMPLEADO NOT = SPACES
-                      MOVE WS-LINEA-SEPARADORA
-                         TO REGISTRO-REPORTE
+                   IF WS-ANT-RFC-EMPLEADO NOT = SPACES
+                       MOVE WS-LINEA-SEPARADORA TO REGISTRO-REPORTE
                        WRITE REGISTRO-REPORTE
-                     END-IF
+                   END-IF
 
-           *> DATOS DEL NUEVO EMPLEADO
-                   MOVE EE-RFC-EMPLEADO       TO R-RFC
-                   MOVE EE-NOMBRE-EMPL        TO R-NOMBRE
-                   MOVE EE-APATERNO           TO R-APATERNO
-                   MOVE EE-AMATERNO           TO R-AMATERNO
-                   MOVE EE-RFC-EMPLEADO       TO WS-ANT-RFC-EMPLEADO
+                   MOVE EE-RFC-EMPLEADO TO R-RFC
+                   MOVE EE-NOMBRE-EMPL  TO R-NOMBRE
+                   MOVE EE-APATERNO     TO R-APATERNO
+                   MOVE EE-AMATERNO     TO R-AMATERNO
+                   MOVE EE-RFC-EMPLEADO TO WS-ANT-RFC-EMPLEADO
                END-IF
 
-           *> DATOS DE LA EMPRESA
                MOVE EE-RFC-EMPRESA        TO R-RFC-EMPRESA
                MOVE EE-NOMBRE-EMPR        TO R-NOMBRE-EMPRESA
                MOVE WS-SALARIO-FORMATEADO TO R-SALARIOS
 
-           *> ESCRIBIR LA LINEA EN REPORTE.TXT
-               MOVE WS-LINEA-REPORTE      TO REGISTRO-REPORTE
+               MOVE WS-LINEA-REPORTE TO REGISTRO-REPORTE
                WRITE REGISTRO-REPORTE
 
-           *> LEER SIGUIENTE REGISTRO
                PERFORM 90-LEER-EMPLEADOS-EMPRESAS
            END-PERFORM
 
-           *> BORDE INFERIOR DEL REPORTE
-           MOVE WS-LINEA-SEPARADORA  TO REGISTRO-REPORTE
+           MOVE WS-LINEA-SEPARADORA TO REGISTRO-REPORTE
            WRITE REGISTRO-REPORTE.
 
        120-CERRAR-REPORTE.
@@ -451,8 +439,8 @@
                    AT END
                        MOVE "S" TO WS-FIN-ARCHIVO-2
                    NOT AT END
-                       MOVE EE-RFC-EMPRESA  TO EE-RFC-EMPRESA-IDX
                        MOVE EE-RFC-EMPLEADO TO EE-RFC-EMPLEADO-IDX
+                       MOVE EE-RFC-EMPRESA  TO EE-RFC-EMPRESA-IDX
                        MOVE EE-NOMBRE-EMPL  TO EE-NOMBRE-EMPL-IDX
                        MOVE EE-APATERNO     TO EE-APATERNO-IDX
                        MOVE EE-AMATERNO     TO EE-AMATERNO-IDX
@@ -463,16 +451,46 @@
                END-READ
            END-PERFORM.
 
+       140-BUSCAR-EMPLEADO.
+           DISPLAY "INGRESE EL RFC DEL EMPLEADO:"
+           ACCEPT RFC
+           MOVE RFC TO EE-RFC-EMPLEADO-IDX
+
+           START EMPLEADOS-EMPRESAS-IDX
+               KEY IS EQUAL EE-RFC-EMPLEADO-IDX
+               INVALID KEY
+                   DISPLAY "RFC NO ENCONTRADO"
+               NOT INVALID KEY
+                   DISPLAY "EMPLEADO ENCONTRADO. EMPRESAS ASOCIADAS:"
+                   PERFORM 145-LEER-EMPRESAS-EMPLEADO
+           END-START.
+
+       145-LEER-EMPRESAS-EMPLEADO.
+           MOVE "N" TO WS-FIN-BUSQUEDA
+           PERFORM UNTIL WS-FIN-BUSQUEDA = "S"
+               READ EMPLEADOS-EMPRESAS-IDX NEXT
+                   AT END
+                       MOVE "S" TO WS-FIN-BUSQUEDA
+                   NOT AT END
+                       IF EE-RFC-EMPLEADO-IDX NOT = RFC
+                           MOVE "S" TO WS-FIN-BUSQUEDA
+                       ELSE
+                           PERFORM 140-VER-DATOS
+                       END-IF
+               END-READ
+           END-PERFORM.
+
        140-VER-DATOS.
+           PERFORM 100-FORMATEAR-DATOS-INDX
            DISPLAY "---------------------------------------------------"
-           DISPLAY "RFC EMPRESA         :" EE-RFC-EMPRESA-IDX
            DISPLAY "RFC EMPLEADO        :" EE-RFC-EMPLEADO-IDX
            DISPLAY "NOMBRE EMPLEADO     :" EE-NOMBRE-EMPL-IDX
            DISPLAY "APELLIDO PATERNO    :" EE-APATERNO-IDX
            DISPLAY "APELLIDO MATERNO    :" EE-AMATERNO-IDX
+           DISPLAY "RFC EMPRESA         :" EE-RFC-EMPRESA-IDX
            DISPLAY "NOMBRE EMPRESA      :" EE-NOMBRE-EMPR-IDX
-           DISPLAY "FECHA ALTA EMPRESA  :" EE-FECHA-UP-IDX
-           DISPLAY "SALARIO             :" EE-SALARIO-IDX.
+           DISPLAY "FECHA ALTA EMPRESA  :" WS-FECHA-FORMATEADA-INDX
+           DISPLAY "SALARIO             :" WS-SALARIO-FORMATEADO-INDX.
 
        150-CERRAR-ARCHIVOS.
            CLOSE EMPLEADOS-EMPRESAS
