@@ -1,0 +1,10 @@
+*.class
+*.o
+*.exe
+
+Log.txt
+Reporte.txt
+Empleados-o.txt
+Empresas-o.txt
+Empleados-sort.txt
+Empresas-sort.txt
