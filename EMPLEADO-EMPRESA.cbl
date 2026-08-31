@@ -342,19 +342,19 @@
 
        01  WS-ENCABEZADO.
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(15) VALUE "RFC          ".
+           05 FILLER PIC X(15) VALUE " RFC         ".
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(20) VALUE "NOMBRE              ".
+           05 FILLER PIC X(20) VALUE "  NOMBRE           ".
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(20) VALUE "APELLIDO PATERNO    ".
+           05 FILLER PIC X(20) VALUE "  APELLIDO PATERNO  ".
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(20) VALUE "APELLIDO MATERNO    ".
+           05 FILLER PIC X(20) VALUE "  APELLIDO MATERNO  ".
            05 FILLER PIC X VALUE "|".
            05 FILLER PIC X(12) VALUE "RFC EMPRESAS".
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(20) VALUE "NOMBRE EMPRESAS     ".
+           05 FILLER PIC X(20) VALUE " NOMBRE EMPRESAS    ".
            05 FILLER PIC X VALUE "|".
-           05 FILLER PIC X(13) VALUE "SALARIOS     ".
+           05 FILLER PIC X(13) VALUE "  SALARIOS  ".
 
 
       ******************************************************************
